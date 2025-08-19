@@ -52,7 +52,6 @@ function App() {
     return (
         <Router>
             <Routes>
-                {/* Публичный маршрут для логина */}
                 <Route
                     path="/login"
                     element={
@@ -64,7 +63,6 @@ function App() {
                     }
                 />
 
-                {/* Защищенные маршруты */}
                 <Route
                     path="/"
                     element={
@@ -73,10 +71,8 @@ function App() {
                         </ProtectedRoute>
                     }
                 >
-                    {/* Перенаправление с корня на направления */}
                     <Route index element={<Navigate to="/directions" replace/>}/>
 
-                    {/* Защищенные страницы админки */}
                     <Route path="directions" element={<DirectionsManager/>}/>
                     <Route path="doctors" element={<DoctorsManager/>}/>
                     <Route path="reviews" element={<ReviewsManager/>}/>
