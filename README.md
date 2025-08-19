@@ -1,69 +1,105 @@
-# React + TypeScript + Vite
+# Админ панель Nuraimed
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Минимальная админка с использованием React + TypeScript + Tailwind CSS для управления медицинским API.
 
-Currently, two official plugins are available:
+## 🚀 Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Установите зависимости:
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. Запустите приложение:
+```bash
+npm run dev
 ```
+
+3. Откройте браузер по адресу: http://localhost:5173
+
+> **Примечание:** Если при запуске возникает ошибка с PostCSS и Tailwind CSS, убедитесь, что установлен пакет `@tailwindcss/postcss`:
+> ```bash
+> npm install @tailwindcss/postcss
+> ```
+
+## 🔐 Вход в систему
+
+Используйте тестовые данные для входа:
+- **Логин:** `admin`
+- **Пароль:** `admin123`
+
+## 📋 Функционал
+
+### Направления медицинских услуг
+- Просмотр списка направлений с пагинацией
+- Добавление новых направлений с изображением
+- Редактирование существующих направлений
+- Удаление направлений
+
+### Врачи
+- Управление списком врачей
+- Добавление врачей с фото и полной информацией:
+  - ФИО
+  - Специализация
+  - Опыт работы
+  - Образование
+- Редактирование и удаление врачей
+
+### Отзывы
+- Просмотр всех отзывов пациентов
+- Модерация отзывов (удаление неподходящих)
+- Отображение рейтинга в звездах
+- Сортировка по дате создания
+
+## 🎨 Дизайн
+
+Использован минимальный дизайн с Tailwind CSS:
+- Чистый и современный интерфейс
+- Адаптивная верстка
+- Интуитивная навигация
+- Модальные окна для форм
+
+## 🔧 API Configuration
+
+API настроен на работу с бэкендом по адресу: `http://localhost:8080/api`
+
+Если ваш бэкенд запущен на другом порту, измените `API_BASE_URL` в файле `src/api.ts`.
+
+## 📱 Возможности
+
+- ✅ Аутентификация с JWT токенами
+- ✅ Загрузка изображений (multipart/form-data)
+- ✅ Пагинация для больших списков
+- ✅ Подтверждение удаления
+- ✅ Обработка ошибок
+- ✅ Автоматическое обновление токенов
+- ✅ Адаптивный дизайн
+
+## 🛠 Технологии
+
+- **React 19** - фронтенд фреймворк
+- **TypeScript** - типизация
+- **Tailwind CSS** - стилизация
+- **Axios** - HTTP клиент
+- **Vite** - сборщик проекта
+
+## 📂 Структура проекта
+
+```
+src/
+├── components/          # React компоненты
+│   ├── Login.tsx       # Форма входа
+│   ├── DirectionsManager.tsx  # Управление направлениями
+│   ├── DoctorsManager.tsx     # Управление врачами
+│   └── ReviewsManager.tsx     # Управление отзывами
+├── api.ts              # API клиент
+├── types.ts            # TypeScript типы
+├── App.tsx             # Главный компонент
+└── main.tsx            # Точка входа
+```
+
+## 🔒 Безопасность
+
+- JWT токены хранятся в localStorage
+- Автоматическое добавление токена в заголовки запросов
+- Защищенные маршруты требуют аутентификации
+- Автоматический выход при истечении токена

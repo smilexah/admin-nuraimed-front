@@ -1,35 +1,92 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {useState, useEffect} from 'react';
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import {Login} from './components/Login';
+import {Layout} from './components/Layout';
+import {ProtectedRoute} from './components/ProtectedRoute';
+import {DirectionsManager} from './components/DirectionsManager';
+import {DoctorsManager} from './components/DoctorsManager';
+import {ReviewsManager} from './components/ReviewsManager';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    useEffect(() => {
+        // Проверяем наличие токена при загрузке
+        const token = localStorage.getItem('accessToken');
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        console.log('Проверка токенов при загрузке приложения:', {
+            accessToken: token ? 'найден' : 'отсутствует',
+            refreshToken: refreshToken ? 'найден' : 'отсутствует',
+        });
+
+        if (token) {
+            console.log('Пользователь уже авторизован');
+            setIsAuthenticated(true);
+        } else {
+            console.log('Пользователь не авторизован');
+        }
+        setLoading(false);
+    }, []);
+
+    const handleLogin = () => {
+        console.log('Пользователь успешно авторизован');
+        setIsAuthenticated(true);
+    };
+
+    const handleLogout = () => {
+        console.log('Пользователь вышел из системы');
+        setIsAuthenticated(false);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-lg">Загрузка...</div>
+            </div>
+        );
+    }
+
+    return (
+        <Router>
+            <Routes>
+                {/* Публичный маршрут для логина */}
+                <Route
+                    path="/login"
+                    element={
+                        isAuthenticated ? (
+                            <Navigate to="/directions" replace/>
+                        ) : (
+                            <Login onLogin={handleLogin}/>
+                        )
+                    }
+                />
+
+                {/* Защищенные маршруты */}
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <Layout onLogout={handleLogout}/>
+                        </ProtectedRoute>
+                    }
+                >
+                    {/* Перенаправление с корня на направления */}
+                    <Route index element={<Navigate to="/directions" replace/>}/>
+
+                    {/* Защищенные страницы админки */}
+                    <Route path="directions" element={<DirectionsManager/>}/>
+                    <Route path="doctors" element={<DoctorsManager/>}/>
+                    <Route path="reviews" element={<ReviewsManager/>}/>
+                </Route>
+
+                {/* Fallback маршрут */}
+                <Route path="*" element={<Navigate to={isAuthenticated ? "/directions" : "/login"} replace/>}/>
+            </Routes>
+        </Router>
+    );
 }
 
-export default App
+export default App;
