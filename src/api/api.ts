@@ -21,7 +21,7 @@ const processQueue = (error: unknown, token?: string) => {
 };
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_API_URL || "https://api.nuraimed.kz",
+    baseURL: "http://localhost:8080/api", // import.meta.env.VITE_BACKEND_API_URL || "https://api.nuraimed.kz"
     timeout: 10000,
 });
 
