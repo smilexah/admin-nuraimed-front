@@ -5,9 +5,7 @@ import {DirectionsManager} from "../components/directions/DirectionsManager.tsx"
 export const DirectionsPage: FC = () => {
     return (
         <Layout>
-            <div className="flex flex-col gap-4">
-                <DirectionsManager />
-            </div>
+            <DirectionsManager/>
         </Layout>
     )
 }
