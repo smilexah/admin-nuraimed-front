@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { Direction, PageResponse } from '../types';
-import { directionsAPI } from '../api';
+import type { Direction } from '../../types/directions.ts';
+import type { PageResponse } from '../../types/common.ts';
+import {create, deleteDirection, getAll, update} from "../../api/endpoints/directions.ts";
 
 export const DirectionsManager: React.FC = () => {
   const [directions, setDirections] = useState<Direction[]>([]);
@@ -40,13 +41,13 @@ export const DirectionsManager: React.FC = () => {
       if (e.key === 'Escape') { e.stopPropagation(); setShowErrorModal(false); }
     };
     document.addEventListener('keydown', onKey, { capture: true });
-    return () => document.removeEventListener('keydown', onKey, { capture: true } as any);
+      return () => document.removeEventListener('keydown', onKey, { capture: true });
   }, [showErrorModal]);
 
   const loadDirections = async () => {
     setLoading(true);
     try {
-      const response: PageResponse<Direction> = await directionsAPI.getAll(currentPage, 10);
+      const response: PageResponse<Direction> = await getAll(currentPage, 10);
       setDirections(response.content);
       setTotalPages(response.totalPages);
     } catch (error) {
@@ -140,9 +141,9 @@ export const DirectionsManager: React.FC = () => {
       }
 
       if (editingDirection) {
-        await directionsAPI.update(editingDirection.id, data);
+        await update(editingDirection.id, data);
       } else {
-        await directionsAPI.create(data);
+        await create(data);
       }
 
       await loadDirections();
@@ -186,7 +187,7 @@ export const DirectionsManager: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Вы уверены, что хотите удалить это направление?')) {
       try {
-        await directionsAPI.delete(id);
+        await deleteDirection(id);
         await loadDirections();
       } catch (error) {
         console.error('Ошибка удаления:', error);

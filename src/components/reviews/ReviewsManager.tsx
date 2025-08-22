@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import type { Review, PageResponse } from '../types';
-import { reviewsAPI } from '../api';
+import type { Review } from '../../types/reviews.ts';
+import type { PageResponse } from '../../types/common.ts';
+import {deleteReview, getAll} from "../../api/endpoints/reviews.ts";
 
 export const ReviewsManager: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -15,7 +16,7 @@ export const ReviewsManager: React.FC = () => {
   const loadReviews = async () => {
     setLoading(true);
     try {
-      const response: PageResponse<Review> = await reviewsAPI.getAll(currentPage, 10);
+      const response: PageResponse<Review> = await getAll(currentPage, 10);
       setReviews(response.content);
       setTotalPages(response.totalPages);
     } catch (error) {
@@ -28,7 +29,7 @@ export const ReviewsManager: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Удалить отзыв?')) {
       try {
-        await reviewsAPI.delete(id);
+        await deleteReview(id);
         loadReviews();
       } catch (error) {
         console.error('Ошибка удаления:', error);

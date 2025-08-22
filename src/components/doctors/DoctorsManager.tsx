@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { Doctor, PageResponse } from '../types';
-import { doctorsAPI } from '../api';
+import type { Doctor } from '../../types/doctors.ts';
+import type { PageResponse } from '../../types/common.ts';
+import {create, deleteDoctor, getAll, update} from "../../api/endpoints/doctors.ts";
 
 export const DoctorsManager: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -40,7 +41,7 @@ export const DoctorsManager: React.FC = () => {
   const loadDoctors = async () => {
     setLoading(true);
     try {
-      const response: PageResponse<Doctor> = await doctorsAPI.getAll(currentPage, 10);
+      const response: PageResponse<Doctor> = await getAll(currentPage, 10);
       setDoctors(response.content);
       setTotalPages(response.totalPages);
     } catch (error) {
@@ -181,9 +182,9 @@ export const DoctorsManager: React.FC = () => {
       }
 
       if (editingDoctor) {
-        await doctorsAPI.update(editingDoctor.id, data);
+        await update(editingDoctor.id, data);
       } else {
-        await doctorsAPI.create(data);
+        await create(data);
       }
 
       await loadDoctors();
@@ -233,7 +234,7 @@ export const DoctorsManager: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этого врача?')) {
       try {
-        await doctorsAPI.delete(id);
+        await deleteDoctor(id);
         await loadDoctors();
       } catch (error) {
         console.error('Ошибка удаления:', error);
