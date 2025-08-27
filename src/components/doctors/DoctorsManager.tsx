@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { Doctor } from '../../types/doctors.ts';
 import type { PageResponse } from '../../types/common.ts';
 import {create, deleteDoctor, getAll, update} from "../../api/endpoints/doctors.ts";
+
+interface AxiosError {
+  code?: string;
+  response?: {
+    status?: number;
+  };
+}
+
+const isAxiosError = (error: unknown): error is AxiosError => {
+  return typeof error === 'object' && error !== null;
+};
 
 export const DoctorsManager: React.FC = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -26,9 +37,43 @@ export const DoctorsManager: React.FC = () => {
     removeCurrentImage: false
   });
 
+  const loadDoctors = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response: PageResponse<Doctor> = await getAll(currentPage, 10);
+      setDoctors(response.content);
+      setTotalPages(response.totalPages);
+    } catch (error: unknown) {
+      console.error('Ошибка загрузки врачей:', error);
+
+      let userFriendlyMessage = 'Произошла ошибка при загрузке врачей';
+
+      if (isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          userFriendlyMessage = 'Превышено время ожидания соединения с сервером. Проверьте подключение к интернету или попробуйте позже.';
+        } else if (error.response?.status === 401) {
+          userFriendlyMessage = 'Ошибка авторизации. Пожалуйста, войдите в систему снова.';
+        } else if (error.response?.status === 403) {
+          userFriendlyMessage = 'Недостаточно прав для выполнения операции.';
+        } else if (error.response?.status === 404) {
+          userFriendlyMessage = 'API endpoint не найден. Проверьте настройки сервера.';
+        } else if (error.response?.status && error.response.status >= 500) {
+          userFriendlyMessage = 'Ошибка сервера. Попробуйте позже.';
+        } else if (!navigator.onLine) {
+          userFriendlyMessage = 'Отсутствует подключение к интернету.';
+        }
+      }
+
+      setErrorMessage(userFriendlyMessage);
+      setShowErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
   useEffect(() => {
     loadDoctors();
-  }, [currentPage]);
+  }, [loadDoctors]);
 
   useEffect(() => {
     if (showErrorModal) {
@@ -37,19 +82,6 @@ export const DoctorsManager: React.FC = () => {
       return () => { document.body.style.overflow = prev; };
     }
   }, [showErrorModal]);
-
-  const loadDoctors = async () => {
-    setLoading(true);
-    try {
-      const response: PageResponse<Doctor> = await getAll(currentPage, 10);
-      setDoctors(response.content);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      console.error('Ошибка загрузки врачей:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getTranslation = (doctor: Doctor, lang: string = 'ru') => {
     return doctor.translations.find(t => t.languageCode === lang) ||
@@ -288,15 +320,6 @@ export const DoctorsManager: React.FC = () => {
       }));
     }
   };
-
-  useEffect(() => {
-    if (!showErrorModal) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); setShowErrorModal(false); }
-    };
-    document.addEventListener('keydown', onKey, { capture: true });
-    return () => document.removeEventListener('keydown', onKey, { capture: true } as any);
-  }, [showErrorModal]);
 
   return (
     <div className="space-y-6">

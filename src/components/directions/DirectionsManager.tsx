@@ -1,8 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import type { Direction } from '../../types/directions.ts';
 import type { PageResponse } from '../../types/common.ts';
 import {create, deleteDirection, getAll, update} from "../../api/endpoints/directions.ts";
+
+interface AxiosError {
+  code?: string;
+  response?: {
+    status?: number;
+  };
+}
+
+const isAxiosError = (error: unknown): error is AxiosError => {
+  return typeof error === 'object' && error !== null;
+};
 
 export const DirectionsManager: React.FC = () => {
   const [directions, setDirections] = useState<Direction[]>([]);
@@ -23,9 +34,43 @@ export const DirectionsManager: React.FC = () => {
     removeCurrentImage: false
   });
 
+  const loadDirections = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response: PageResponse<Direction> = await getAll(currentPage, 10);
+      setDirections(response.content);
+      setTotalPages(response.totalPages);
+    } catch (error: unknown) {
+      console.error('Ошибка загрузки направлений:', error);
+      
+      let userFriendlyMessage = 'Произошла ошибка при загрузке направлений';
+      
+      if (isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          userFriendlyMessage = 'Превышено время ожидания соединения с сервером. Проверьте подключение к интернету или попробуйте позже.';
+        } else if (error.response?.status === 401) {
+          userFriendlyMessage = 'Ошибка авторизации. Пожалуйста, войдите в систему снова.';
+        } else if (error.response?.status === 403) {
+          userFriendlyMessage = 'Недостаточно прав для выполнения операции.';
+        } else if (error.response?.status === 404) {
+          userFriendlyMessage = 'API endpoint не найден. Проверьте настройки сервера.';
+        } else if (error.response?.status && error.response.status >= 500) {
+          userFriendlyMessage = 'Ошибка сервера. Попробуйте позже.';
+        } else if (!navigator.onLine) {
+          userFriendlyMessage = 'Отсутствует подключение к интернету.';
+        }
+      }
+      
+      setErrorMessage(userFriendlyMessage);
+      setShowErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage]);
+
   useEffect(() => {
     loadDirections();
-  }, [currentPage]);
+  }, [loadDirections]);
 
   useEffect(() => {
     if (showErrorModal) {
@@ -43,19 +88,6 @@ export const DirectionsManager: React.FC = () => {
     document.addEventListener('keydown', onKey, { capture: true });
       return () => document.removeEventListener('keydown', onKey, { capture: true });
   }, [showErrorModal]);
-
-  const loadDirections = async () => {
-    setLoading(true);
-    try {
-      const response: PageResponse<Direction> = await getAll(currentPage, 10);
-      setDirections(response.content);
-      setTotalPages(response.totalPages);
-    } catch (error) {
-      console.error('Ошибка загрузки направлений:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getTranslation = (direction: Direction, lang: string = 'ru') => {
     return direction.translations.find(t => t.languageCode === lang) ||
