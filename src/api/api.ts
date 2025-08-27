@@ -22,7 +22,7 @@ const processQueue = (error: unknown, token?: string) => {
 
 export const api = axios.create({
     baseURL: "https://api.di-clinic.kz/api", // import.meta.env.VITE_BACKEND_API_URL || "https://api.nuraimed.kz"
-    timeout: 30000, // Increased from 10000 to 30000 (30 seconds)
+    // timeout: 30000, // Increased from 10000 to 30000 (30 seconds)
 });
 
 api.interceptors.request.use(
