@@ -84,13 +84,16 @@ export const DirectionsManager: React.FC = () => {
     };
 
     const tableRows = useMemo(
-        () => directions.map((d) => ({
-            id: d.id,
-            title: getTranslation(d).title,
-            description: getTranslation(d).description,
-            imageBase64: d.directionImage ?? null,
-            raw: d,
-        })),
+        () => directions.map((d) => {
+            const translation = getTranslation(d);
+            return {
+                id: d.id,
+                title: translation.title || 'Без названия',
+                description: translation.description || 'Без описания',
+                imageBase64: d.directionImage ?? null,
+                raw: d,
+            };
+        }),
         [directions]
     );
 
@@ -116,7 +119,7 @@ export const DirectionsManager: React.FC = () => {
                                 const data = new FormData();
 
                                 // translations
-                                const langs = Object.keys(form.translations);
+                                const langs = Object.keys(form.translations) as (keyof typeof form.translations)[];
                                 langs.forEach((lang, i) => {
                                     const t = form.translations[lang];
                                     data.append(`translations[${i}].languageCode`, lang);

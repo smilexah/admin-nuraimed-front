@@ -40,9 +40,10 @@ export const LoginForm: FC = () => {
         try {
             await login(data);
             navigate("/directions");
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error("Ошибка входа:", err);
-            setError(err.response?.data?.message || "Ошибка входа. Проверьте логин и пароль.");
+            const errorMessage = err?.response?.data?.message || "Ошибка входа. Проверьте логин и пароль.";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

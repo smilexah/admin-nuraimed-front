@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Direction } from '../../types/directions';
 
 export type DirectionsRow = {
     id: number;
@@ -6,7 +7,7 @@ export type DirectionsRow = {
     description: string;
     imageBase64: string | null;
     // raw direction kept by parent if needed
-    raw?: unknown;
+    raw: Direction; // Изменяем с unknown на Direction для типобезопасности
 };
 
 export const DirectionsTable: React.FC<{
