@@ -2,27 +2,17 @@ import {type FC} from 'react';
 import {NavLink, useNavigate} from 'react-router-dom';
 import logoImage from '../assets/logo-nobuffer.png';
 import {logout} from "../api/endpoints/auth.ts";
-import {clearTokens, getAccessToken} from "../api/utils/tokenUtils.ts";
 
 export const Header: FC = () => {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
-        const accessToken = getAccessToken();
-
-        if (!accessToken) {
-            console.error('Нет токена доступа для выхода');
-            clearTokens();
-            navigate('/login');
-            return;
-        }
-
         try {
-            await logout(accessToken);
+            await logout();
+            navigate('/login');
         } catch (error) {
             console.error('Ошибка выхода:', error);
-        } finally {
-            clearTokens();
+            // В случае ошибки все равно перенаправляем на login
             navigate('/login');
         }
     };

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from "./utils/tokenUtils.ts";
+import { getAccessToken, setAccessToken, clearAccessToken } from "./utils/tokenUtils.ts";
 
 type FailedRequest = {
     resolve: (token: string) => void;
@@ -21,16 +21,23 @@ const processQueue = (error: unknown, token?: string) => {
 };
 
 export const api = axios.create({
-    baseURL: "https://api.di-clinic.kz/api", // import.meta.env.VITE_BACKEND_API_URL || "https://api.nuraimed.kz"
-    // timeout: 30000, // Increased from 10000 to 30000 (30 seconds)
+    baseURL: "https://api.di-clinic.kz/api", // https://api.di-clinic.kz/api
+    withCredentials: true,
 });
 
 api.interceptors.request.use(
     (config) => {
-        const token = getAccessToken();
-        if (token && config.headers) {
-            config.headers.Authorization = `Bearer ${token}`;
+        // Не добавляем токен только для эндпоинта login
+        const publicEndpoints = ['/auth/login'];
+        const isPublicEndpoint = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+
+        if (!isPublicEndpoint) {
+            const token = getAccessToken();
+            if (token && config.headers) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
         }
+
         return config;
     },
     (error) => Promise.reject(error)
@@ -41,7 +48,19 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Не пытаемся обновлять токены для эндпоинта login
+        const isLoginEndpoint = originalRequest.url?.includes('/auth/login');
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
+            // Если это ошибка 401 на refresh-token эндпоинте, значит refresh token истек
+            if (originalRequest.url?.includes('/auth/refresh-token')) {
+                clearAccessToken();
+                if (window.location.pathname !== '/login') {
+                    window.location.href = "/login";
+                }
+                return Promise.reject(error);
+            }
+
             if (isRefreshing) {
                 return new Promise<string>((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
@@ -57,27 +76,27 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const refresh = getRefreshToken();
-                if (!refresh) throw new Error("No refresh token");
+                // Refresh token автоматически берется из HttpOnly cookie
+                const response = await api.post("/auth/refresh-token");
+                const { accessToken } = response.data;
 
-                const response = await api.post("/auth/refresh-token", {
-                    refreshToken: refresh,
-                })
+                setAccessToken(accessToken);
 
-                const { access, refresh: newRefresh } = response.data;
-
-                // если сервер вернул новый refresh, сохраняем его, иначе старый
-                setTokens(access, newRefresh ?? refresh);
-
-                api.defaults.headers.common.Authorization = `Bearer ${access}`;
-                processQueue(null, access);
+                // Обновляем заголовок для повторного запроса
+                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+                processQueue(null, accessToken);
 
                 return api(originalRequest);
-            } catch (err) {
-                processQueue(err, undefined);
-                clearTokens();
-                window.location.href = "/login";
-                return Promise.reject(err);
+            } catch (refreshError) {
+                processQueue(refreshError, undefined);
+                clearAccessToken();
+
+                // Перенаправляем на страницу входа только если это не уже страница входа
+                if (window.location.pathname !== '/login') {
+                    window.location.href = "/login";
+                }
+
+                return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
             }

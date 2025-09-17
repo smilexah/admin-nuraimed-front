@@ -1,12 +1,22 @@
-export const setTokens = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+export const setAccessToken = (accessToken: string) => {
+    localStorage.setItem("ACCESS_TOKEN", accessToken);
 };
 
-export const getAccessToken = () => localStorage.getItem("accessToken");
-export const getRefreshToken = () => localStorage.getItem("refreshToken");
+export const getAccessToken = () => localStorage.getItem("ACCESS_TOKEN");
 
-export const clearTokens = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+export const clearAccessToken = () => {
+    localStorage.removeItem("ACCESS_TOKEN");
+};
+
+export const isAuthenticated = (): boolean => {
+    const token = getAccessToken();
+    if (!token) return false;
+
+    // Проверка истечения токена (опционально)
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp * 1000 > Date.now();
+    } catch {
+        return false;
+    }
 };

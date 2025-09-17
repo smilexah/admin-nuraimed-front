@@ -1,4 +1,4 @@
-import {type FC, useState} from "react";
+import {type FC, useState, useEffect} from "react";
 import {useForm, Controller} from "react-hook-form";
 import {yupResolver} from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -6,6 +6,7 @@ import {PulseLoader} from "react-spinners";
 import {UserIcon, LockClosedIcon} from "@heroicons/react/24/outline";
 import {CustomButton} from "../../ui/CustomButton.tsx";
 import {login} from "../../api/endpoints/auth.ts";
+import {clearAccessToken} from "../../api/utils/tokenUtils.ts";
 import {CustomInput} from "../../ui/CustomInput.tsx";
 import {useNavigate} from "react-router-dom";
 
@@ -19,6 +20,7 @@ type FormData = yup.InferType<typeof schema>;
 export const LoginForm: FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const {
         control,
@@ -28,20 +30,32 @@ export const LoginForm: FC = () => {
         resolver: yupResolver(schema),
     });
 
+    useEffect(() => {
+        clearAccessToken();
+    }, []);
+
     const onSubmit = async (data: FormData) => {
         setLoading(true);
+        setError(null);
         try {
-            await login(data)
-        } catch (err) {
+            await login(data);
+            navigate("/directions");
+        } catch (err: unknown) {
             console.error("Ошибка входа:", err);
+            setError(err.response?.data?.message || "Ошибка входа. Проверьте логин и пароль.");
         } finally {
             setLoading(false);
-            navigate("/directions");
         }
     };
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-[20px]">
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {error}
+                </div>
+            )}
+
             <Controller
                 name="username"
                 control={control}
