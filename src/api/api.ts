@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAccessToken, setAccessToken, clearAccessToken } from "./utils/tokenUtils.ts";
+import {getAccessToken, setAccessToken, clearAccessToken} from "./utils/tokenUtils.ts";
 
 type FailedRequest = {
     resolve: (token: string) => void;
@@ -21,7 +21,7 @@ const processQueue = (error: unknown, token?: string) => {
 };
 
 export const api = axios.create({
-    baseURL: "https://api.di-clinic.kz/api", // https://api.di-clinic.kz/api
+    baseURL: "http://localhost:8080/api", // https://api.di-clinic.kz/api
     withCredentials: true,
 });
 
@@ -63,7 +63,7 @@ api.interceptors.response.use(
 
             if (isRefreshing) {
                 return new Promise<string>((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
+                    failedQueue.push({resolve, reject});
                 })
                     .then((token) => {
                         originalRequest.headers.Authorization = `Bearer ${token}`;
@@ -78,7 +78,7 @@ api.interceptors.response.use(
             try {
                 // Refresh token автоматически берется из HttpOnly cookie
                 const response = await api.post("/auth/refresh-token");
-                const { accessToken } = response.data;
+                const {accessToken} = response.data;
 
                 setAccessToken(accessToken);
 

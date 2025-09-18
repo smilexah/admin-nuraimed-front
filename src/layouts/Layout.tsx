@@ -10,8 +10,10 @@ const Layout: FC<LayoutProps> = ({children}) => {
         <div className="flex flex-col min-h-screen bg-gray-50">
             <Header/>
 
-            <main className="w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                {children}
+            <main className="flex-1 w-full max-w-7xl mx-auto py-4 px-4 sm:py-6 sm:px-6 lg:px-8">
+                <div className="w-full">
+                    {children}
+                </div>
             </main>
         </div>
     );
