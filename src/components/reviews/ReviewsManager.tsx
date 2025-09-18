@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import type {Review} from '../../types/reviews.ts';
 import type {PageResponse} from '../../types/common.ts';
 import {deleteReview, getAll, updateReviewStatus} from "../../api/endpoints/reviews.ts";
@@ -11,9 +11,9 @@ export const ReviewsManager: React.FC = () => {
 
     useEffect(() => {
         loadReviews();
-    }, [currentPage, loadReviews]);
+    }, [currentPage]);
 
-    const loadReviews = useCallback(async () => {
+    const loadReviews = async () => {
         setLoading(true);
         try {
             const response: PageResponse<Review> = await getAll(currentPage, 10);
@@ -24,7 +24,7 @@ export const ReviewsManager: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage]);
+    };
 
     const handleDelete = async (id: number) => {
         if (window.confirm('Удалить отзыв?')) {
@@ -73,8 +73,8 @@ export const ReviewsManager: React.FC = () => {
                                                         : 'bg-yellow-100 text-yellow-800'
                                                 }`}
                                             >
-                                                {review.isPublished ? 'Опубликован' : 'На модерации'}
-                                            </span>
+                        {review.isPublished ? 'Опубликован' : 'На модерации'}
+                      </span>
                                         </div>
                                         <p className="text-gray-600 mb-2">{review.message}</p>
                                         <p className="text-sm text-gray-500">
