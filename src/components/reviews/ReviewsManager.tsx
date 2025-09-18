@@ -15,10 +15,8 @@ export const ReviewsManager: React.FC = () => {
         try {
             const response: PageResponse<Review> = await getAll(currentPage, 10);
             setReviews(response.content);
-            const totalPagesValue = response.page?.totalPages || response.totalPages || 0;
-            setTotalPages(totalPagesValue);
-            const totalElements = response.page?.totalElements || response.totalElements || 0;
-            setTotalReviews(totalElements);
+            setTotalPages(response.page.totalPages);
+            setTotalReviews(response.page.totalElements);
         } catch (error) {
             console.error('Ошибка загрузки отзывов:', error);
         } finally {

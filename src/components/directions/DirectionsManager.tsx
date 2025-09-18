@@ -26,8 +26,7 @@ export const DirectionsManager: React.FC = () => {
         try {
             const response: PageResponse<Direction> = await getAll(currentPage, perPage);
             setDirections(response.content);
-            const totalPagesValue = response.page?.totalPages || response.totalPages || 0;
-            setTotalPages(totalPagesValue);
+            setTotalPages(response.page.totalPages);
         } catch (err: unknown) {
             console.error('Ошибка загрузки направлений:', err);
             let userFriendlyMessage = 'Произошла ошибка при загрузке направлений';

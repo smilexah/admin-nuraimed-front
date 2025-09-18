@@ -105,7 +105,6 @@ export const DirectionsForm: React.FC<{
                         <div className="space-y-4">
                             <h4 className="text-md font-medium text-gray-900 border-b pb-2">Русский язык</h4>
                             <TranslationFields
-                                langLabel="Русский"
                                 value={value.translations.ru}
                                 onChange={(next) =>
                                     setValue((v) => ({...v, translations: {...v.translations, ru: next}}))
@@ -115,7 +114,6 @@ export const DirectionsForm: React.FC<{
                         <div className="space-y-4">
                             <h4 className="text-md font-medium text-gray-900 border-b pb-2">Казахский язык</h4>
                             <TranslationFields
-                                langLabel="Казахский"
                                 value={value.translations.kk}
                                 onChange={(next) =>
                                     setValue((v) => ({...v, translations: {...v.translations, kk: next}}))

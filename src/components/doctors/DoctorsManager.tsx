@@ -42,8 +42,7 @@ export const DoctorsManager: React.FC = () => {
         try {
             const response: PageResponse<Doctor> = await getAll(currentPage, 10);
             setDoctors(response.content);
-            const totalPagesValue = response.page?.totalPages || response.totalPages || 0;
-            setTotalPages(totalPagesValue);
+            setTotalPages(response.page.totalPages);
         } catch (error: unknown) {
             console.error('Ошибка загрузки врачей:', error);
 
@@ -735,4 +734,3 @@ export const DoctorsManager: React.FC = () => {
         </div>
     );
 };
-
