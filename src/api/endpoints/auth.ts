@@ -6,7 +6,7 @@ export const login = async (auth: IAuthRequest): Promise<IAuthResponse> => {
     const response = await api.post("/auth/login", {username: auth.username, password: auth.password});
 
     const {accessToken} = response.data;
-
+    
     // Сохраняем только accessToken, refresh token автоматически устанавливается в HttpOnly cookie
     setAccessToken(accessToken);
 
@@ -19,7 +19,7 @@ export const refreshToken = async (): Promise<IAuthResponse> => {
 
     const {accessToken} = response.data;
     setAccessToken(accessToken);
-
+    
     return response.data;
 }
 

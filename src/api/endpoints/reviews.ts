@@ -1,13 +1,15 @@
-import {api} from "../api.ts";
-import type {Review} from "../../types/reviews.ts";
-import type {PageResponse} from "../../types/common.ts";
+import {api} from '../api';
+import type {Review} from '../../types/reviews';
+import type {PageResponse} from '../../types/common';
 
 export const getAll = async (page = 0, size = 10): Promise<PageResponse<Review>> => {
-    const response = await api.get('/reviews', {params: {page, size}});
+    const response = await api.get('/reviews/admin', {params: {page, size}});
     return response.data;
 };
 
 export const deleteReview = async (id: number): Promise<void> => {
-    const response = await api.delete(`/reviews/${id}`);
-    return response.data;
+    return await api.delete(`/reviews/${id}`);};
+
+export const updateReviewStatus = async (id: number, isPublished: boolean): Promise<void> => {
+    return await api.patch(`/reviews/${id}`, { isPublished });
 };

@@ -3,6 +3,6 @@ export interface Review {
   name: string;
   phone: string;
   message: string;
+  isPublished: boolean;
   createdAt: string;
 }
-

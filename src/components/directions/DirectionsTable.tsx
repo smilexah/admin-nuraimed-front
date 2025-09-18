@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Direction } from '../../types/directions';
+import type {Direction} from '../../types/directions';
 
 export type DirectionsRow = {
     id: number;
@@ -14,7 +14,7 @@ export const DirectionsTable: React.FC<{
     rows: DirectionsRow[];
     onEdit: (row: DirectionsRow) => void;
     onDelete: (row: DirectionsRow) => void;
-}> = ({ rows, onEdit, onDelete }) => {
+}> = ({rows, onEdit, onDelete}) => {
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -61,6 +61,12 @@ export const DirectionsTable: React.FC<{
                 ))}
                 </tbody>
             </table>
+
+            {rows.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                    Направлении пока нет
+                </div>
+            )}
         </div>
     );
 };
