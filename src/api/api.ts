@@ -1,5 +1,5 @@
-import axios from "axios";
-import {getAccessToken, setAccessToken, clearAccessToken} from "./utils/tokenUtils.ts";
+import axios, {type AxiosRequestConfig, type InternalAxiosRequestConfig} from "axios";
+import {clearAccessToken, getAccessToken, setAccessToken} from "./utils/tokenUtils.ts";
 
 type FailedRequest = {
     resolve: (token: string) => void;
@@ -11,33 +11,31 @@ let isRefreshing = false;
 
 const processQueue = (error: unknown, token?: string) => {
     failedQueue.forEach(p => {
-        if (error || !token) {
-            p.reject(error ?? new Error("Token missing"));
-        } else {
-            p.resolve(token);
-        }
+        if (error || !token) p.reject(error ?? new Error("Token missing"));
+        else p.resolve(token);
     });
     failedQueue = [];
 };
 
+// расширяем тип конфигурации (чтобы не ругался TS на _retry)
+declare module "axios" {
+    interface AxiosRequestConfig {
+        _retry?: boolean;
+    }
+}
+
 export const api = axios.create({
-    baseURL: "https://api.di-clinic.kz/api", // https://api.di-clinic.kz/api
+    baseURL: "http://localhost:8080/api", // https://api.di-clinic.kz/api
     withCredentials: true,
 });
 
 api.interceptors.request.use(
-    (config) => {
-        // Не добавляем токен только для эндпоинта login
-        const publicEndpoints = ['/auth/login'];
-        const isPublicEndpoint = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
-
-        if (!isPublicEndpoint) {
-            const token = getAccessToken();
-            if (token && config.headers) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
+    (config: InternalAxiosRequestConfig) => {
+        const token = getAccessToken();
+        if (token) {
+            config.headers = config.headers ?? {};
+            (config.headers as any).Authorization = `Bearer ${token}`;
         }
-
         return config;
     },
     (error) => Promise.reject(error)
@@ -46,27 +44,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
+        const originalRequest: AxiosRequestConfig & { _retry?: boolean } = error.config ?? {};
+        const status = error?.response?.status;
+        const isRefreshCall = originalRequest?.url?.includes("/auth/refresh-token");
 
-        // Не пытаемся обновлять токены для эндпоинта login
-        const isLoginEndpoint = originalRequest.url?.includes('/auth/login');
-
-        if (error.response?.status === 401 && !originalRequest._retry && !isLoginEndpoint) {
-            // Если это ошибка 401 на refresh-token эндпоинте, значит refresh token истек
-            if (originalRequest.url?.includes('/auth/refresh-token')) {
-                clearAccessToken();
-                if (window.location.pathname !== '/login') {
-                    window.location.href = "/login";
-                }
-                return Promise.reject(error);
-            }
-
+        if (status === 401 && !originalRequest._retry && !isRefreshCall) {
             if (isRefreshing) {
                 return new Promise<string>((resolve, reject) => {
-                    failedQueue.push({resolve, reject});
+                    failedQueue.push({ resolve, reject });
                 })
                     .then((token) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        originalRequest.headers = originalRequest.headers ?? {};
+                        (originalRequest.headers as any).Authorization = `Bearer ${token}`;
                         return api(originalRequest);
                     })
                     .catch((err) => Promise.reject(err));
@@ -76,30 +65,34 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                // Refresh token автоматически берется из HttpOnly cookie
-                const response = await api.post("/auth/refresh-token");
-                const {accessToken} = response.data;
+                // без body — сервер сам читает refresh из httpOnly cookie
+                const resp = await api.post("/auth/refresh-token", null, { withCredentials: true });
+
+                const { accessToken } = resp.data ?? {};
+                if (!accessToken) throw new Error("No accessToken in refresh response");
 
                 setAccessToken(accessToken);
+                api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
-                // Обновляем заголовок для повторного запроса
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
                 processQueue(null, accessToken);
 
+                originalRequest.headers = originalRequest.headers ?? {};
+                (originalRequest.headers as any).Authorization = `Bearer ${accessToken}`;
                 return api(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError, undefined);
+            } catch (err) {
+                processQueue(err, undefined);
                 clearAccessToken();
-
-                // Перенаправляем на страницу входа только если это не уже страница входа
-                if (window.location.pathname !== '/login') {
-                    window.location.href = "/login";
-                }
-
-                return Promise.reject(refreshError);
+                window.location.href = "/login";
+                return Promise.reject(err);
             } finally {
                 isRefreshing = false;
             }
+        }
+
+        if (status === 401 && isRefreshCall) {
+            // refresh тоже не прошёл — уводим на логин
+            clearAccessToken();
+            window.location.href = "/login";
         }
 
         return Promise.reject(error);

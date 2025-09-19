@@ -3,34 +3,31 @@ import {clearAccessToken, setAccessToken} from "../utils/tokenUtils.ts";
 import type {IAuthRequest, IAuthResponse} from "../../types/auth.ts";
 
 export const login = async (auth: IAuthRequest): Promise<IAuthResponse> => {
-    const response = await api.post("/auth/login", {username: auth.username, password: auth.password});
+    try {
+        const response = await api.post("/auth/login", {username: auth.username, password: auth.password});
 
-    const {accessToken} = response.data;
-    
-    // Сохраняем только accessToken, refresh token автоматически устанавливается в HttpOnly cookie
-    setAccessToken(accessToken);
+        const {accessToken} = response.data;
 
-    return response.data;
-}
+        if (!accessToken) {
+            throw new Error('Access token not received from login endpoint');
+        }
 
-export const refreshToken = async (): Promise<IAuthResponse> => {
-    // Refresh token автоматически берется из cookie, не требует заголовка Authorization
-    const response = await api.post("/auth/refresh-token");
+        // Сохраняем только accessToken, refresh token автоматически устанавливается в HttpOnly cookie
+        setAccessToken(accessToken);
 
-    const {accessToken} = response.data;
-    setAccessToken(accessToken);
-    
-    return response.data;
+        return response.data;
+    } catch (error) {
+        console.error('Login failed:', error);
+        throw error;
+    }
 }
 
 export const logout = async () => {
     try {
-        // Отправляем запрос на logout (токен автоматически добавляется в interceptor)
         await api.post("/auth/logout");
     } catch (error) {
         console.warn('Logout error:', error);
     } finally {
-        // Всегда очищаем токены, даже если запрос на сервер не удался
         clearAccessToken();
     }
 }
