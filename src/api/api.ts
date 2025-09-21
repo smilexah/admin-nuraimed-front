@@ -25,7 +25,7 @@ declare module "axios" {
 }
 
 export const api = axios.create({
-    baseURL: "http://localhost:8080/api", // https://api.di-clinic.kz/api
+    baseURL: "https://api.di-clinic.kz/api", // https://api.di-clinic.kz/api
     withCredentials: true,
 });
 
